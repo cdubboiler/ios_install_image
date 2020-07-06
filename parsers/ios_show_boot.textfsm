@@ -1,0 +1,5 @@
+Value BOOTVAR (\S+(.bin|.conf))
+
+Start
+  ^BOOT\svariable\s=\s${BOOTVAR}
+

@@ -1,0 +1,46 @@
+---
+- set_fact:
+    boot_statement: "{{ device_file_system }}{{ system_image_filename }}"
+
+- block:
+  - name: no boot system
+    ios_config:
+      match: none
+      save_when: always
+      lines:
+        - no boot system
+
+  - name: add boot statement
+    ios_config:
+      match: none
+      save_when: always
+      lines:
+        - boot system "{{ boot_statement }}"
+  when:
+    - device_switch_nums|length == 1
+
+- block:
+  - name: no boot system
+    ios_config:
+      match: none
+      save_when: always
+      lines:
+        - no boot system
+
+  - name: REPLACE METHOD - ADD BOOT STATEMENT - STACKED
+    ios_config:
+      match: none
+      save_when: always
+      lines:
+        - boot system switch all "{{ boot_statment }}"
+  when:
+    - device_switch_nums|length > 1
+
+- include_tasks: verification.yml
+
+- set_fact:
+    time_for_reboot: True
+  when: device_boot_var == boot_statement
+
+- include_tasks: reboot.yml
+  when: time_for_reboot

@@ -1,0 +1,19 @@
+---
+- name: reboot ios device
+  cli_command:
+    command: reload
+    prompt:
+      - confirm
+    answer:
+      - y
+
+- name: Wait for the device to come back online
+  wait_for:
+    host: "{{ ansible_host }}"
+    port: 22
+    delay: 15
+    timeout: 3600
+
+- name: DEVICE IS BACK, WAIT FOR SERVICES
+  wait_for:
+    timeout: 90

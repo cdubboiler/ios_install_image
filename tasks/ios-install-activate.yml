@@ -1,0 +1,68 @@
+---
+- name: add
+  ios_command:
+    commands:
+      - command: "install add file {{ device_file_system }}{{ system_image_filename }}"
+  register: add
+
+- set_fact:
+    boot_statement: "{{ device_file_system }}packages.conf"
+
+- block:
+    - name: REQUEST METHOD - VALIDATE
+      fail:
+        msg: "INSTALLATION FAILED - {{ add.stdout[0] }}"
+
+    - name: end host if install fails
+      meta: end_host
+      
+  when: add.stdout[0] is search("FAILED")
+
+- name: delete boot
+  ios_config:
+    match: none
+    lines:
+      - no boot system
+    save_when: always
+
+- name: boot packages.conf file
+  ios_config:
+    match: none
+    lines:
+      - boot system "{{ boot_statement }}"
+    save_when: always
+
+- include_tasks: verification.yml
+
+- set_fact:
+    time_for_reboot: True
+  when: device_boot_var == boot_statement
+
+- block:
+    - name: activate
+      ios_command:
+        commands:
+          - command: "install activate prompt-level none"
+      register: activate
+
+    - block:
+        - name: VALIDATE
+          fail:
+            msg: "INSTALLATION FAILED - {{ activate.stdout[0] }}"
+
+        - name: end host if install fails
+          meta: end_host
+          
+      when: activate.stdout[0] is search("FAILED")
+
+    - name: Wait for the device to come back online
+      wait_for:
+        host: "{{ ansible_host }}"
+        port: 22
+        delay: 15
+        timeout: 3600
+
+    - name: DEVICE IS BACK, WAIT FOR SERVICES
+      wait_for:
+        timeout: 90
+  when: time_for_reboot

@@ -1,0 +1,24 @@
+---
+- name: save before install process
+  ios_config:
+    save_when: always
+
+- block:
+  - name: Install Software
+    block:
+      - include_tasks: "{{ ansible_network_os }}-install-activate.yml"
+    rescue:
+      - block:
+          - include_tasks: "{{ ansible_network_os }}-install-request.yml"
+        rescue:
+          - block:
+              - include_tasks: "{{ ansible_network_os }}-install-software.yml"
+            rescue:
+              - block:
+                  - include_tasks: "{{ ansible_network_os }}-install-replace.yml"
+  when: device_requires_install
+
+- name: reset_connection
+  meta: reset_connection
+
+- include_tasks: "{{ ansible_network_os }}-post-install-commands.yml"

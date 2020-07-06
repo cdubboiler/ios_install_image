@@ -1,0 +1,10 @@
+---
+
+galaxy_info:
+  author: Colin Wagner
+  description: Ansible Role to install network software
+  company: Chevron
+  role_name: ansible-role-install-network-software
+
+dependencies:
+  - ansible-network.network-engine

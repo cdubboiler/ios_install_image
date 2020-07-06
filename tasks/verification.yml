@@ -1,0 +1,33 @@
+---
+- block:
+    - name: Get switch information
+      ios_command:
+        commands:
+          - show boot
+      register: command_output
+
+    - name: Find the version specific templates
+      set_fact:
+        boot_template: "{{ role_path }}/parsers/{{ ansible_network_os }}_show_boot.textfsm"
+
+    - name: Parse the command output
+      set_fact:
+        boot_data: "{{ command_output.stdout[0] | parse_cli_textfsm(boot_template) }}"
+
+  rescue:
+    - name: Get switch information
+      ios_command:
+        commands:
+          - show bootvar
+      register: command_output
+
+    - name: Find the version specific templates
+      set_fact:
+        boot_template: "{{ role_path }}/parsers/{{ ansible_network_os }}_show_boot.textfsm"
+
+    - name: Parse the command output
+      set_fact:
+        boot_data: "{{ command_output.stdout[0] | parse_cli_textfsm(boot_template) }}"
+
+- set_fact:
+    device_boot_var: "{{ boot_data[0].BOOTVAR }}"

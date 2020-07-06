@@ -1,0 +1,36 @@
+---
+- set_fact:
+    boot_statement: "{{ device_file_system }}packages.conf"
+    
+- name: SOFTWARE METHOD  - SET BOOT STATEMENT
+  ios_config:
+    match: none
+    save_when: always
+    lines:
+      - no boot system switch all
+      - "boot system switch all {{ device_file_system }}packages.conf"
+
+- name: SOFTWARE METHOD - INSTALL MODE INSTALL
+  ios_command:
+    commands:
+      - command: "software install file {{ device_file_system }}{{ system_image_filename }} new force on-reboot"
+  register: install_output
+
+- block:
+    - name: VALIDATE
+      fail:
+        msg: "INSTALLATION FAILED - {{ install_output.stdout[0] }}"
+
+    - name: end host if install fails
+      meta: end_host
+      
+  when: install_output.stdout[0] is search("aborted")
+
+- include_tasks: verification.yml
+
+- set_fact:
+    time_for_reboot: True
+  when: device_boot_var == boot_statement
+
+- include_tasks: reboot.yml
+  when: time_for_reboot

@@ -1,0 +1,11 @@
+---
+- name: Run a clean
+  include_role:
+    name: ios_clean_filesystem
+
+- name: Disable SCP
+  ios_config:
+    match: none
+    lines:
+      - no ip scp server enable
+    save_when: changed
